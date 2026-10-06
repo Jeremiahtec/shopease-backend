@@ -1,0 +1,58 @@
+# Render Blueprint: one click creates the API and its PostgreSQL database.
+# Dashboard -> New -> Blueprint -> pick this repository.
+# Free plans are fine for a demo or your project defence, but see DEPLOY_VERCEL_RENDER.md before using them for a real shop.
+
+databases:
+  - name: shopease-db
+    plan: free              # free databases EXPIRE after 30 days and have no backups. Use a paid plan for real customers.
+    region: frankfurt       # closest Render region to Nigeria; keep it the same as the API
+    databaseName: shopease
+    user: shopease
+
+services:
+  - type: web
+    name: shopease-api
+    runtime: docker
+    plan: free              # free = 512 MB RAM, spins down after 15 min idle. Use a paid plan for real customers.
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /actuator/health/readiness
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      # database (Render gives the pieces; the app builds the JDBC url from them)
+      - key: DB_HOST
+        fromDatabase: { name: shopease-db, property: host }
+      - key: DB_PORT
+        fromDatabase: { name: shopease-db, property: port }
+      - key: DB_NAME
+        fromDatabase: { name: shopease-db, property: database }
+      - key: DB_USERNAME
+        fromDatabase: { name: shopease-db, property: user }
+      - key: DB_PASSWORD
+        fromDatabase: { name: shopease-db, property: password }
+      # secrets
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_EMAIL
+        sync: false         # Render asks you for these when you create the Blueprint
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      # your Vercel address, e.g. https://shopease.vercel.app  (no trailing slash)
+      - key: FRONTEND_URL
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      # your Vercel address + /payment/callback
+      - key: PAYSTACK_CALLBACK_URL
+        sync: false
+      # optional: real emails (password reset!) through Resend
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      # keeps the JVM inside a 512 MB instance
+      - key: JAVA_OPTS
+        value: "-XX:MaxRAMPercentage=65 -XX:+UseSerialGC -Duser.timezone=UTC"
