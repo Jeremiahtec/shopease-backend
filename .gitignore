@@ -5,7 +5,3 @@ target/
 .env
 *.log
 .DS_Store
-.env.example
-README.md
-DESIGN.md
-*.properties

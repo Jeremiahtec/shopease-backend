@@ -27,7 +27,8 @@ public class JwtService {
     public JwtService(AppProperties props, Environment environment) {
         String secret = props.jwt().secret();
         if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
-            throw new IllegalStateException("app.jwt.secret must be at least 32 characters long");
+            throw new IllegalStateException(
+                    "The JWT secret is missing or too short. Set the JWT_SECRET environment variable to at least 32 characters.");
         }
         if (environment.acceptsProfiles(Profiles.of("prod")) && secret.startsWith("change-me")) {
             throw new IllegalStateException("Set the JWT_SECRET environment variable before running with the prod profile");
